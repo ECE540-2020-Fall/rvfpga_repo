@@ -1,0 +1,22 @@
+
+LedsSwitches.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	00010e37          	lui	t3,0x10
+   4:	fffe0e13          	addi	t3,t3,-1 # ffff <next+0xffeb>
+   8:	80001eb7          	lui	t4,0x80001
+   c:	408e8e93          	addi	t4,t4,1032 # 80001408 <next+0x800013f4>
+  10:	01cea023          	sw	t3,0(t4)
+
+00000014 <next>:
+  14:	800015b7          	lui	a1,0x80001
+  18:	40058593          	addi	a1,a1,1024 # 80001400 <next+0x800013ec>
+  1c:	0005a283          	lw	t0,0(a1)
+  20:	80001537          	lui	a0,0x80001
+  24:	40450513          	addi	a0,a0,1028 # 80001404 <next+0x800013f0>
+  28:	0102d293          	srli	t0,t0,0x10
+  2c:	00552023          	sw	t0,0(a0)
+  30:	fe0002e3          	beqz	zero,14 <next>
