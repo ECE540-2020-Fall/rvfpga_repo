@@ -3,5 +3,6 @@
 *.ip_user_files/
 *.runs/
 *.sim/
+*.vcd
 !*.bit
 !*.xpr
