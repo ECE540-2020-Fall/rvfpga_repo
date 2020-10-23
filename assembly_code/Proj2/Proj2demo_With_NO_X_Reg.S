@@ -296,7 +296,7 @@ _start:
                 li  t1, 0x0000FFFF
                 sw  t1, 0(t0)
 
-                lui   x12, 0xbf80               # x12 = address of LEDs (0xbf800000)
+                lui   a2, 0xbf80               # a2 = address of LEDs (0xbf800000)
                 li  t3,     FALSE               # clear the semaphore
                 jal LED_wrleds                  #
                 nop
@@ -318,7 +318,8 @@ _start:
                 la t2, SP_RGTC0NT
                 sb t3, 0(t2)
 
-
+                # reset robot state to RUNNING
+                ////la  t0, nsa_running
                 # sw  t0, (SP_NSA_STATE)
                 la t2, SP_NSA_STATE
                 sw t0, 0(t2)
@@ -342,41 +343,41 @@ main_L0:
                 sb t0, 0(t2)
 /*
                 # polling for the robot interrupt
-                li    x13, PORT_BOTUPDT         #   while(25) {  // main loop is an infinite loop
-                lw    x21, 0(x13)               #   while (upd_sysreg == 0)  {}   // loop until isr updates rojobot registers
-                beq   x21, zero, main_L0
+                li    a3, PORT_BOTUPDT         #   while(25) {  // main loop is an infinite loop
+                lw    s5, 0(a3)               #   while (upd_sysreg == 0)  {}   // loop until isr updates rojobot registers
+                beq   s5, zero, main_L0
                 nop
 */
-                li    x13, PORT_INTACK          #   Load the Acknowledgement port address
-                li    x21, INT_ACK              #   Set the Acknowledgement bit
-                sw    x21, 0(x13)               #   Write the Acknowledgement bit
+                li    a3, PORT_INTACK          #   Load the Acknowledgement port address
+                li    s5, INT_ACK              #   Set the Acknowledgement bit
+                sw    s5, 0(a3)               #   Write the Acknowledgement bit
 
 main_L1:
-                li    x13, PORT_BOTINFO         #   Load the BotInfo port address
-                lw    x21, 0(x13)               #   Read the BotInfo Register
+                li    a3, PORT_BOTINFO         #   Load the BotInfo port address
+                lw    s5, 0(a3)               #   Read the BotInfo Register
 
-                and   x22, x21, MSKBOTINFO      #   Mask out the unwanted bits
-                # sb    x22, BOTINF_REG           #   Update the BotInfo memory location
+                and   s6, s5, MSKBOTINFO      #   Mask out the unwanted bits
+                # sb    s6, BOTINF_REG           #   Update the BotInfo memory location
                 la t2, BOTINF_REG
-                sb x22, 0(t2)
+                sb s6, 0(t2)
 
-                srl   x21, x21, 8               #   Move the original data to extract the Sensor info
-                and   x22, x21, MSKBOTINFO      #   Mask out the unwanted bits
-                # sb    x22, SENSOR_REG           #   Store the sensor information in the Sensor register memory location
+                srl   s5, s5, 8               #   Move the original data to extract the Sensor info
+                and   s6, s5, MSKBOTINFO      #   Mask out the unwanted bits
+                # sb    s6, SENSOR_REG           #   Store the sensor information in the Sensor register memory location
                 la t2, SENSOR_REG
-                sb x22, 0(t2)
+                sb s6, 0(t2)
 
-                srl   x21, x21, 8               #   Do the same for LOCy_REG
-                and   x22, x21, MSKBOTINFO
-                # sb    x22, LOCy_REG
+                srl   s5, s5, 8               #   Do the same for LOCy_REG
+                and   s6, s5, MSKBOTINFO
+                # sb    s6, LOCy_REG
                 la t2, LOCy_REG
-                sb x22, 0(t2)
+                sb s6, 0(t2)
 
-                srl   x21, x21, 8               #   Do the same for LOCx_REG
-                and   x22, x21, MSKBOTINFO
-                # sb    x22, LOCx_REG
+                srl   s5, s5, 8               #   Do the same for LOCx_REG
+                and   s6, s5, MSKBOTINFO
+                # sb    s6, LOCx_REG
                 la t2, LOCx_REG
-                sb x22, 0(t2)
+                sb s6, 0(t2)
 
                 jal next_loc                    #   Dig[3:2] = nex LocX# Dig[25:0] = next LocY
                 nop
@@ -391,9 +392,9 @@ main_L2:        jal wr_alldigits                #   write all of the digits to t
                 jal LED_wrleds                  #
                 nop
 
-                li    x13, PORT_INTACK          #   Clear the Acknowledgement bit
-                li    x21, FALSE
-                sw    x21, 0(x13)
+                li    a3, PORT_INTACK          #   Clear the Acknowledgement bit
+                li    s5, FALSE
+                sw    s5, 0(a3)
 
                 beq   zero, zero,   next_step       #   tell rojobot what to do next
                 nop
@@ -411,20 +412,20 @@ ret_next_step:
 
 # ===============================================================================
 # === wr_alldigits() - Writes all 8 display digits from the global locations  ===
-# === Registers used x25,t3                                                   ===
+# === Registers used s9,t3                                                   ===
 # --- Scratchpad RAM locations used SP_DIG4, SP_DIG5, SP_DIG6, SP_DIG7        ===
 # ===============================================================================
 
 wr_alldigits:
-                lw  x25, (SP_DIG0)              # Load the lower 7 segment displays
+                lw  s9, (SP_DIG0)              # Load the lower 7 segment displays
                 li  t3, PORT_SEVENSEG_LOW
-                sw  x25, 0(t3)                  # Write to the lower 7 segment displays
-                lw  x25, (SP_DIG4)              # Load the higher 7 segment displays
+                sw  s9, 0(t3)                  # Write to the lower 7 segment displays
+                lw  s9, (SP_DIG4)              # Load the higher 7 segment displays
                 li  t3, PORT_SEVENSEG_HGH
-                sw  x25, 0(t3)                  # Write to the higher 7 segment displays
-                li  x25, 0x00                   # Enable all the display segments
+                sw  s9, 0(t3)                  # Write to the higher 7 segment displays
+                li  s9, 0x00                   # Enable all the display segments
                 li  t3, PORT_SEVENSEG_EN
-                sw  x25, 0(t3)
+                sw  s9, 0(t3)
                 jr  ra
                 nop
 
@@ -434,7 +435,7 @@ wr_alldigits:
 
 # ===============================================================================
 # === init_btnluptbl() - initialize button translation lookup table in SP RAM ===
-# === Registers affected: x25, t3                                             ===
+# === Registers affected: s9, t3                                             ===
 # ===============================================================================
 init_btnluptbl: la  t3,     (SP_BTNBAS1)        # t3 gets base of button translation lookup table
                 li  t0,     SP_LSRS             # t0 gets values for 0x00
@@ -491,9 +492,9 @@ init_btnluptbl: la  t3,     (SP_BTNBAS1)        # t3 gets base of button transla
 # =============================================================================
 # === btn2mot() - Button to MotCtl conversion function                      ===
 # === Registers affected: t3, t0                                            ===
-# === x25 contains the button value to convert.                             ===
+# === s9 contains the button value to convert.                             ===
 # === Result (Motor Control register value) is returned in t3               ===
-# === x25 (Button value) is not changed                                     ===
+# === s9 (Button value) is not changed                                     ===
 # =============================================================================
 btn2mot:        la  t0,     (SP_BTNBAS1)        # t0 gets base of button conversion table
                 add t3,     a0, 0               # mask out upper nibble of buttons
@@ -506,7 +507,7 @@ btn2mot:        la  t0,     (SP_BTNBAS1)        # t0 gets base of button convers
 
 # ===============================================================================
 # === init_mvmttbl() - initialize movement translation lookup table in SP RAM ===
-# === Registers affected: x25, t3                                              ===
+# === Registers affected: s9, t3                                              ===
 # ===============================================================================
 init_mvmttbl:   la  t3,     (SP_MVTBAS1)        # t3 gets base of movement translation lookup table
                 li  t0,     SP_MVMT0            # t0 gets values for 0x00
@@ -563,12 +564,12 @@ init_mvmttbl:   la  t3,     (SP_MVTBAS1)        # t3 gets base of movement trans
 # =============================================================================
 # === mvmt2cc() - movement to character code conversion function            ===
 # === Registers affected: t3, t0                                            ===
-# === x25 contains the movment value to convert.                            ===
+# === s9 contains the movment value to convert.                            ===
 # === Result (character code to display) is returned in t3                  ===
-# === x25 (movement) is not changed                                         ===
+# === s9 (movement) is not changed                                         ===
 # =============================================================================
 mvmt2cc:        la  t0,     (SP_MVTBAS1)        # t0 gets base of movment conversion table
-                add t3,     x25, 0              # mask out upper nibble of movment
+                add t3,     s9, 0              # mask out upper nibble of movment
                 AND t3, t3, MSKLOWNIB           #
                 ADD t0, t0, t3                  # t0 = Base + offset into table
                 lb  t3,     0(t0)               # and fetch the entry
@@ -582,14 +583,14 @@ mvmt2cc:        la  t0,     (SP_MVTBAS1)        # t0 gets base of movment conver
 
 # ========================================================================
 # === next_mvmt() - Calculate  digit for motion indicator              ===
-# === Registers affected: x12, x25                                     ===
+# === Registers affected: a2, s9                                     ===
 # === Uses BOTINF_REG (Bot Info register) to get movement.             ===
 # ========================================================================
-next_mvmt:      lb  x25,    (BOTINF_REG)        # x25[3:0] = BOTINF_REG[7:4]
-                # sb  x25,    SP_OLDMVMT
+next_mvmt:      lb  s9,    (BOTINF_REG)        # s9[3:0] = BOTINF_REG[7:4]
+                # sb  s9,    SP_OLDMVMT
                 la t2, SP_OLDMVMT
-                sb x25, 0(t2)
-                srl     x25, x25, 4             #
+                sb s9, 0(t2)
+                srl     s9, s9, 4             #
                 beq zero, zero, mvmt2cc             # translate movement to char code
                 nop
 back_mvmt2cc:
@@ -601,140 +602,140 @@ back_mvmt2cc:
 
 # ==============================================================================
 # === next_hdg() - Calculate  digits for heading (compass setting)           ===
-# === Registers affected: x11, x14, x13, x25, t3, x5, x6, x7          ===
+# === Registers affected: a1, a4, a3, s9, t3, t0, t1, t2          ===
 # === Uses BOTINF_REG (Bot Info register) to get orientation.  Calculates    ===
 # === digits with a case statement based on orientation.                     ===
 # ==============================================================================
-next_hdg:       lb  x25,    (BOTINF_REG)        # x25[2:0] = BOTINF_REG[2:0] = orientation
-                and x25,    x25,    MSKORIENT   #
-                # sb  x25,    SP_OLDHDG
+next_hdg:       lb  s9,    (BOTINF_REG)        # s9[2:0] = BOTINF_REG[2:0] = orientation
+                and s9,    s9,    MSKORIENT   #
+                # sb  s9,    SP_OLDHDG
                 la t3, SP_OLDHDG
-                sb x25, 0(t3)
+                sb s9, 0(t3)
                                                 # switch(orientation)  {
 nh_caseORN:     
-                # bne x25,    OR_N, nh_caseORNE   #   case(OR_N):
+                # bne s9,    OR_N, nh_caseORNE   #   case(OR_N):
                 la t3, OR_N
-                bne x25, t3, nh_caseORNE
+                bne s9, t3, nh_caseORNE
                 nop                             #
-                li  x5,     00                  #       Dig[2:0] = 000
-                li  x6,     00                  #
-                li  x7,     00                  #
+                li  t0,     00                  #       Dig[2:0] = 000
+                li  t1,     00                  #
+                li  t2,     00                  #
                 beq zero,zero,  nh_endcase          #       break
                 nop
                                                 #
 nh_caseORNE:    
-                # bne x25,    OR_NE, nh_caseORE   #   case (OR_NE):
+                # bne s9,    OR_NE, nh_caseORE   #   case (OR_NE):
                 la t3, OR_NE
-                bne x25, t3, nh_caseORE
+                bne s9, t3, nh_caseORE
                 nop                             #
-                li  x5,     00                  #       Dig[2:0] = 045
-                li  x6,     04                  #
-                li  x7,     05                  #
+                li  t0,     00                  #       Dig[2:0] = 045
+                li  t1,     04                  #
+                li  t2,     05                  #
                 beq zero,zero,  nh_endcase          #       break
                 nop
 
 nh_caseORE:     
-                # bne x25,    OR_E, nh_caseORSE   #   case (OR_E):
+                # bne s9,    OR_E, nh_caseORSE   #   case (OR_E):
                 la t3, OR_E
-                bne x25, t3, nh_caseORSE
+                bne s9, t3, nh_caseORSE
                 nop                             #
-                li  x5,     0x00                #       Dig[2:0] = 090
-                li  x6,     0x09                #
-                li  x7,     0x00                #
+                li  t0,     0x00                #       Dig[2:0] = 090
+                li  t1,     0x09                #
+                li  t2,     0x00                #
                 beq zero,zero,  nh_endcase          #       break
                 nop
 
 nh_caseORSE:    
-                # bne x25,    OR_SE, nh_caseORS   #   case (OR_SE):
+                # bne s9,    OR_SE, nh_caseORS   #   case (OR_SE):
                 la t3, OR_SE
-                bne x25, t3, nh_caseORS
+                bne s9, t3, nh_caseORS
                 nop                             #
-                li  x5,     0x01                #       Dig[2:0] = 135
-                li  x6,     0x03                #
-                li  x7,     0x05                #
+                li  t0,     0x01                #       Dig[2:0] = 135
+                li  t1,     0x03                #
+                li  t2,     0x05                #
                 beq zero,zero,  nh_endcase          #       break
                 nop
 
 nh_caseORS:     
-                # bne x25,    OR_S, nh_caseORSW   #   case (OR_S):
+                # bne s9,    OR_S, nh_caseORSW   #   case (OR_S):
                 la t3, OR_S
-                bne x25, t3, nh_caseORSW
+                bne s9, t3, nh_caseORSW
                 nop                             #
-                li  x5,     0x01                #       Dig[2:0] = 180
-                li  x6,     0x08                #
-                li  x7,     00                  #
+                li  t0,     0x01                #       Dig[2:0] = 180
+                li  t1,     0x08                #
+                li  t2,     00                  #
                 beq zero,zero,  nh_endcase          #       break
                 nop
 
 nh_caseORSW:    
-                # bne x25,    OR_SW, nh_caseORW   #   case (OR_SW):
+                # bne s9,    OR_SW, nh_caseORW   #   case (OR_SW):
                 la t3, OR_SW
-                bne x25, t3, nh_caseORW
+                bne s9, t3, nh_caseORW
                 nop                             #
-                li  x5,     02                  #       Dig[2:0] = 225
-                li  x6,     02                  #
-                li  x7,     05                  #
+                li  t0,     02                  #       Dig[2:0] = 225
+                li  t1,     02                  #
+                li  t2,     05                  #
                 beq zero,zero,  nh_endcase          #       break
                 nop
 
 nh_caseORW:     
-                # bne x25,    OR_W, nh_caseORNW   #   case (OR_W):
+                # bne s9,    OR_W, nh_caseORNW   #   case (OR_W):
                 la t3, OR_W
-                bne x25, t3, nh_caseORNW
+                bne s9, t3, nh_caseORNW
                 nop                             #
-                li  x5,     02                  #       Dig[2:0] = 270
-                li  x6,     07                  #
-                li  x7,     00                  #
+                li  t0,     02                  #       Dig[2:0] = 270
+                li  t1,     07                  #
+                li  t2,     00                  #
                 beq zero,zero,  nh_endcase          #       break
                 nop
 
                                                 #   case (OR_NW):  // only remaining case
-nh_caseORNW:    li  x5,     03                  #       Dig[2:0] = 315
-                li  x6,     01                  #
-                li  x7,     05                  #
+nh_caseORNW:    li  t0,     03                  #       Dig[2:0] = 315
+                li  t1,     01                  #
+                li  t2,     05                  #
                                                 # } // end of switch statement
 nh_endcase:     
-                # sb  x5,     SP_DIG7             # update the heading display digits
+                # sb  t0,     SP_DIG7             # update the heading display digits
                 la t3, SP_DIG7
-                sb x5, 0(t3)
-                # sb  x6,     SP_DIG6             # these are stored in the Scratchpad RAM
+                sb t0, 0(t3)
+                # sb  t1,     SP_DIG6             # these are stored in the Scratchpad RAM
                 la t3, SP_DIG6
-                sb x6, 0(t3)
-                # sb  x7,     SP_DIG5             #
+                sb t1, 0(t3)
+                # sb  t2,     SP_DIG5             #
                 la t3, SP_DIG5
-                sb x7, 0(t3)
+                sb t2, 0(t3)
                 jr  ra
                 nop
 
 
 # ==============================================================================
 # === next_loc() - Calculate digits for Rojobot location                     ===
-# === Registers affected: x12, x11, x14, x13, x25                            ===
+# === Registers affected: a2, a1, a4, a3, s9                            ===
 # === Uses LocX and LocY to get location.                                    ===
 # ==============================================================================
-next_loc:       lb      x25,    (LOCx_REG)              # Dig[3:2] gets X-coordinate
-                add     x11,    x25, 0                  # Digit 2 gets lower nibble
-                and     x11,    x11,   MSK_HEXDIGIT     #
-                srl     x25,    x25, 4                  #
-                add     x12,    x25, 0                  #
+next_loc:       lb      s9,    (LOCx_REG)              # Dig[3:2] gets X-coordinate
+                add     a1,    s9, 0                  # Digit 2 gets lower nibble
+                and     a1,    a1,   MSK_HEXDIGIT     #
+                srl     s9,    s9, 4                  #
+                add     a2,    s9, 0                  #
 
-                lb      x25,    (LOCy_REG)              # Dig[1:0] gets Y-coordinate
-                add     x13,    x25, 0                  # Digit 0 gets lower nibble
-                and     x13,    x13,   MSK_HEXDIGIT     #
-                srl     x25,    x25, 4                  #
-                add     x14,    x25, 0                  #
-                # sb      x11,    SP_DIG2
+                lb      s9,    (LOCy_REG)              # Dig[1:0] gets Y-coordinate
+                add     a3,    s9, 0                  # Digit 0 gets lower nibble
+                and     a3,    a3,   MSK_HEXDIGIT     #
+                srl     s9,    s9, 4                  #
+                add     a4,    s9, 0                  #
+                # sb      a1,    SP_DIG2
                 la t2, SP_DIG2
-                sb x11, 0(t2)
-                # sb      x12,    SP_DIG3
+                sb a1, 0(t2)
+                # sb      a2,    SP_DIG3
                 la t2, SP_DIG3
-                sb x12, 0(t2)
-                # sb      x13,    SP_DIG0
+                sb a2, 0(t2)
+                # sb      a3,    SP_DIG0
                 la t2, SP_DIG0
-                sb x13, 0(t2)
-                # sb      x14,    SP_DIG1
+                sb a3, 0(t2)
+                # sb      a4,    SP_DIG1
                 la t2, SP_DIG1
-                sb x14, 0(t2)
+                sb a4, 0(t2)
                 jr  ra
                 nop
 
@@ -745,7 +746,7 @@ next_loc:       lb      x25,    (LOCx_REG)              # Dig[3:2] gets X-coordi
 
 # ==============================================================================
 # === next_step() - Tells rojobot what to do next                            ===
-# === Registers affected: x25, t3                                            ===
+# === Registers affected: s9, t3                                            ===
 # === This version reads the pushbuttons, calculates the new Motor Control   ===
 # === register value and then writes MotCtl so Rojobot knows what to do      ===
 # ==============================================================================
@@ -759,17 +760,17 @@ next_step_auto: ### It is just given for your reference.
 ##
 ##
 ##       You need to add your code over here to make the icon move automatically. That is to make icon
-##		 follow black line when you  turn on the SW[15].	
+##               follow black line when you  turn on the SW[15].        
 ##
 ##
 ##                
 #########################################################################################################
 
 next_step_manual:
-                lb      x25,(SENSOR_REG)
+                lb      s9,(SENSOR_REG)
                 lb      t3, (SENSOR_REG)
                 lb      t0, (SENSOR_REG)
-                AND     x25,    x25,MSKPROXL
+                AND     s9,    s9,MSKPROXL
                 AND     t3, t3,MSKPROXR
                 AND     t0, t0,MSKBLKL
 
@@ -777,8 +778,8 @@ next_step_manual:
                 nop
                 jal     btn2mot                     # and calculate new MotCtl - returned in t3
                 nop
-                li      x25,    PORT_BOTCTRL
-                sw      t3,     0(x25)              # tell Rojobot what to do
+                li      s9,    PORT_BOTCTRL
+                sw      t3,     0(s9)              # tell Rojobot what to do
                 beq     zero, zero, ret_next_step
                 nop
 
@@ -805,42 +806,42 @@ check_off_black_line:
 #---------------------
 # reorder_btns() - Rearrange read bits of the push buttons
 #
-# Original order is stored in x25
+# Original order is stored in s9
 # Reorder from xxxU-DLCR --> xxxC-LURD
 #
-# Registers affected: x25, x21, a1
+# Registers affected: s9, s5, a1
 #---------------------
 reorder_btns:
-                add     x25, zero, zero             # init x25 to zero
+                add     s9, zero, zero             # init s9 to zero
 
                 # set D to bit[0]
-                srl     x21, a1, 3              # move D to bit 0 by shift right 3 positions
-                and     x21, x21, 0x00000001    # mask out the unused bits
-                and     x25, x25, 0xFFFFFFFE    # clear the target bit
-                or      x25, x25, x21           # assign bit[0] from x21 to x25, w/o changing the other bits
+                srl     s5, a1, 3              # move D to bit 0 by shift right 3 positions
+                and     s5, s5, 0x00000001    # mask out the unused bits
+                and     s9, s9, 0xFFFFFFFE    # clear the target bit
+                or      s9, s9, s5           # assign bit[0] from s5 to s9, w/o changing the other bits
 
                 # set R to bit[1]
-                sll     x21, a1, 1              # move R to bit 1 by shift left 1 position
-                and     x21, x21, 0x00000002    # mask out the unused bits
-                and     x25, x25, 0xFFFFFFFD    # clear the target bit
-                or      x25, x25, x21           # assign bit[1] from x21 to x25, w/o changing the other bits
+                sll     s5, a1, 1              # move R to bit 1 by shift left 1 position
+                and     s5, s5, 0x00000002    # mask out the unused bits
+                and     s9, s9, 0xFFFFFFFD    # clear the target bit
+                or      s9, s9, s5           # assign bit[1] from s5 to s9, w/o changing the other bits
 
                 # set U to bit[2]
-                srl     x21, a1, 2              # move U to bit 2 by shift right 2 positions
-                and     x21, x21, 0x00000004    # mask out the unused bits
-                and     x25, x25, 0xFFFFFFFB    # clear the target bit
-                or      x25, x25, x21           # assign bit[2] from x21 to x25, w/o changing the other bits
+                srl     s5, a1, 2              # move U to bit 2 by shift right 2 positions
+                and     s5, s5, 0x00000004    # mask out the unused bits
+                and     s9, s9, 0xFFFFFFFB    # clear the target bit
+                or      s9, s9, s5           # assign bit[2] from s5 to s9, w/o changing the other bits
 
                 # set L to bit[3]
-                sll     x21, a1, 1              # move L to bit 3 by shift left 1 position
-                and     x21, x21, 0x00000008    # mask out the unused bits
-                and     x25, x25, 0xFFFFFFF7    # clear the target bit
-                or      x25, x25, x21           # assign bit[3] from x21 to x25, w/o changing the other bits
+                sll     s5, a1, 1              # move L to bit 3 by shift left 1 position
+                and     s5, s5, 0x00000008    # mask out the unused bits
+                and     s9, s9, 0xFFFFFFF7    # clear the target bit
+                or      s9, s9, s5           # assign bit[3] from s5 to s9, w/o changing the other bits
 
                 # set C to bit [4]..., but we don't need it after all, so skip!
 
                 # assign result to a1 and return
-                add     a1, x25, zero
+                add     a1, s9, zero
                 jr      ra
                 nop
 
@@ -856,10 +857,10 @@ reorder_btns:
 # where r = reserved. A value of 1 indicates that the button is pressed.
 # A 0 indicates that the button is not pressed.
 #
-# Registers used x25
+# Registers used s9
 #---------------------
-DEB_rdbtns:     li      x25,        PORT_PBTNS          # read the buttons
-                lw      a1,     0(x25)
+DEB_rdbtns:     li      s9,        PORT_PBTNS          # read the buttons
+                lw      a1,     0(s9)
 
                 # reorder the button positions, according to the Nexys4 DDR
                 /*
@@ -884,13 +885,13 @@ DEB_rdbtns:     li      x25,        PORT_PBTNS          # read the buttons
 #
 # Writes the pattern in t3 to the rightmost 8 LEDs on the Nexyx5
 #
-# Registers used x25, t3
+# Registers used s9, t3
 #---------------------
 LED_wrleds:     
-                add     x25,    t3, 0               # Copy LEDs to x25 to preserve them
-                and     x25, x25,   MSK_LEDS_LO     # mask out unused bits
+                add     s9,    t3, 0               # Copy LEDs to s9 to preserve them
+                and     s9, s9,   MSK_LEDS_LO     # mask out unused bits
                 li      t3, PORT_LEDS
-                sw      x25,    0(t3)               # and write pattern to the LEDs
+                sw      s9,    0(t3)               # and write pattern to the LEDs
                 jr ra                               # and return
                 nop
 
@@ -907,11 +908,11 @@ LED_wrleds:
 # where r = reserved, dp7 (leftmost), dp3, dp2, dp1 dp0 (rightmost) = 25
 # lights the decimal point. A 0 in the position turns off the decimal point
 #
-# Registers used x25,t3
+# Registers used s9,t3
 #---------------------
-SS_wrdpts:      lb      x25,    SP_OLDDP                # Copy the decimal points to x25 to leave t3 unchanged
+SS_wrdpts:      lb      s9,    SP_OLDDP                # Copy the decimal points to s9 to leave t3 unchanged
                 li      t3,     PORT_SEVENSEG_DP
-                sw      x25,        0(t3)   # write the decimal points to the display
+                sw      s9,        0(t3)   # write the decimal points to the display
                 jr    ra
                 nop
 

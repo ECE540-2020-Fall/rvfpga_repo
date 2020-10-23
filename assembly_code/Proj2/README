@@ -1,0 +1,11 @@
+Move your desired Proj2demo.S into proj2demo/src and then Assembly/Run
+
+Proj2demo_With_ALL_X_Reg.S is almost all register names with X's
+Proj2demo_With_NO_X_Reg.S is with purpose named registers and no X named registers.
+
+Both code files work the same.
+
+Using Unix/Cygwin Sed you can convert between the two but not guaranteed perfect.
+sed -f to_nox_regs.sed Proj2demo.S > Proj2demo_With_NO_X_Reg.S
+sed -f to_x_regs.sed Proj2demo.S > Proj2demo_With_ALL_X_Reg.S
+

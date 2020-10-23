@@ -1,0 +1,40 @@
+{
+    "configurations": [
+        {
+            "name": "!!! WARNING !!! AUTO-GENERATED FILE, PLEASE DO NOT MODIFY IT AND USE https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags"
+        },
+        {
+            "name": "Win32",
+            "includePath": [
+                "c:/RVfpga_10-Sept/examples/Blinky/include",
+                "c:/RVfpga_10-Sept/examples/Blinky/src",
+                "C:/Users/BrianCruikshank/.platformio/packages/tool-unity",
+                ""
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "c:/RVfpga_10-Sept/examples/Blinky/include",
+                    "c:/RVfpga_10-Sept/examples/Blinky/src",
+                    "C:/Users/BrianCruikshank/.platformio/packages/tool-unity",
+                    ""
+                ]
+            },
+            "defines": [
+                "PLATFORMIO=50001",
+                "D_NEXYS_A7",
+                "D_SWERV_EH1",
+                ""
+            ],
+            "intelliSenseMode": "clang-x64",
+            "compilerPath": "C:/Users/BrianCruikshank/.platformio/packages/toolchain-riscv/bin/riscv64-unknown-elf-gcc.exe",
+            "compilerArgs": [
+                "-march=rv32imac",
+                "-mabi=ilp32",
+                "-mcmodel=medlow",
+                ""
+            ]
+        }
+    ],
+    "version": 4
+}
